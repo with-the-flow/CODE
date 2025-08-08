@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>代码转摩斯密码链接生成器</title>
+    <title>代码与摩斯密码双向转换工具</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
@@ -38,6 +38,7 @@
             padding: 20px 30px;
             text-align: center;
             border-bottom: 1px solid rgba(101, 119, 134, 0.3);
+            position: relative;
         }
         
         h1 {
@@ -54,6 +55,33 @@
             color: #94a3b8;
             font-size: 1rem;
             margin-top: 5px;
+        }
+        
+        .mode-toggle {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            display: flex;
+            align-items: center;
+            background: rgba(30, 41, 59, 0.8);
+            border-radius: 30px;
+            padding: 5px;
+            border: 1px solid rgba(101, 119, 134, 0.5);
+        }
+        
+        .mode-btn {
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .mode-btn.active {
+            background: linear-gradient(90deg, #4361ee, #3a0ca3);
+            color: white;
+            box-shadow: 0 2px 10px rgba(67, 97, 238, 0.3);
         }
         
         .content {
@@ -173,6 +201,21 @@
             border: 1px solid rgba(101, 119, 134, 0.3);
         }
         
+        .code-result {
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 15px;
+            color: #e2e8f0;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            background: rgba(30, 41, 59, 0.7);
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+            max-height: 200px;
+            overflow: auto;
+            border: 1px solid rgba(101, 119, 134, 0.3);
+        }
+        
         .copy-btn {
             background: rgba(30, 41, 59, 0.9);
             color: #94a3b8;
@@ -243,6 +286,24 @@
             margin-top: 3px;
         }
         
+        .instructions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .instruction-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        
+        .instruction-item i {
+            color: #60a5fa;
+            margin-top: 3px;
+        }
+        
         footer {
             text-align: center;
             padding: 20px;
@@ -262,33 +323,64 @@
             animation: pulse 1.5s infinite;
         }
         
+        .blink {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: #f472b6;
+            border-radius: 50%;
+            margin-right: 5px;
+            animation: blink 1.5s infinite;
+        }
+        
         @keyframes pulse {
             0% { opacity: 0.6; }
             50% { opacity: 1; transform: scale(1.2); }
             100% { opacity: 0.6; }
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        
+        .hidden {
+            display: none;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1><i class="fas fa-code"></i> 代码转摩斯密码链接生成器</h1>
-            <p class="subtitle">输入代码 → 生成包含摩斯密码的链接 → 一键复制分享</p>
+            <h1><i class="fas fa-exchange-alt"></i> 代码与摩斯密码双向转换工具</h1>
+            <p class="subtitle">在代码与摩斯密码链接之间自由转换 - 支持双向操作</p>
+            
+            <div class="mode-toggle">
+                <div id="codeToLinkMode" class="mode-btn active">
+                    <i class="fas fa-code"></i> 代码 → 链接
+                </div>
+                <div id="linkToCodeMode" class="mode-btn">
+                    <i class="fas fa-link"></i> 链接 → 代码
+                </div>
+            </div>
         </header>
         
         <div class="content">
             <div class="editor-section">
                 <div class="section-title">
-                    <i class="fas fa-edit"></i> 代码编辑器
+                    <i class="fas fa-edit"></i> 
+                    <span id="inputTitle">输入代码</span>
                 </div>
                 <div class="code-editor">
                     <textarea id="codeInput" placeholder="在此输入您的代码...">function helloWorld() {
+  // 这是一个示例函数
   console.log("Hello, World!");
   return "摩斯密码: ... .- -- .--. .-.. .";
 }</textarea>
                 </div>
                 <button id="convertBtn" class="convert-btn">
-                    <i class="fas fa-exchange-alt"></i> 转换为摩斯密码链接
+                    <i class="fas fa-exchange-alt"></i> 
+                    <span id="convertBtnText">转换为摩斯密码链接</span>
                 </button>
                 
                 <div class="morse-example">
@@ -325,32 +417,72 @@
             
             <div class="result-section">
                 <div class="section-title">
-                    <i class="fas fa-link"></i> 生成的摩斯密码链接
+                    <i class="fas fa-link"></i> 
+                    <span id="outputTitle">生成的摩斯密码链接</span>
                 </div>
                 <div class="result-box">
-                    <div class="morse-code" id="morseOutput">
-                        <span class="pulse"></span> 转换后的摩斯密码将显示在这里
+                    <div id="morseResult">
+                        <div class="morse-code" id="morseOutput">
+                            <span class="pulse"></span> 转换后的摩斯密码将显示在这里
+                        </div>
+                        <div class="morse-link" id="morseLink">
+                            生成的链接将显示在这里
+                        </div>
                     </div>
-                    <div class="morse-link" id="morseLink">
-                        生成的链接将显示在这里
+                    
+                    <div id="codeResult" class="hidden">
+                        <div class="morse-code">
+                            <span class="blink"></span> 原始代码
+                        </div>
+                        <div class="code-result" id="decodedCode">
+                            解码后的代码将显示在这里
+                        </div>
                     </div>
+                    
                     <button id="copyBtn" class="copy-btn">
-                        <i class="fas fa-copy"></i> 复制链接到剪贴板
+                        <i class="fas fa-copy"></i> 
+                        <span id="copyBtnText">复制链接到剪贴板</span>
                     </button>
                 </div>
                 
                 <div class="morse-example">
                     <h3><i class="fas fa-lightbulb"></i> 使用说明</h3>
-                    <p>1. 在左侧输入代码（支持任何编程语言）</p>
-                    <p>2. 点击"转换为摩斯密码链接"按钮</p>
-                    <p>3. 生成的链接包含您代码的摩斯密码版本</p>
-                    <p>4. 使用"复制链接"按钮分享给他人</p>
+                    <div class="instructions">
+                        <div class="instruction-item">
+                            <i class="fas fa-arrow-right"></i>
+                            <div>
+                                <strong>代码 → 链接模式：</strong>
+                                <p>输入代码 → 转换为摩斯密码 → 生成包含摩斯密码的URL链接</p>
+                            </div>
+                        </div>
+                        <div class="instruction-item">
+                            <i class="fas fa-arrow-left"></i>
+                            <div>
+                                <strong>链接 → 代码模式：</strong>
+                                <p>输入包含摩斯密码的URL链接 → 解码为原始代码</p>
+                            </div>
+                        </div>
+                        <div class="instruction-item">
+                            <i class="fas fa-sync-alt"></i>
+                            <div>
+                                <strong>双向转换：</strong>
+                                <p>点击右上角按钮切换转换方向</p>
+                            </div>
+                        </div>
+                        <div class="instruction-item">
+                            <i class="fas fa-clipboard"></i>
+                            <div>
+                                <strong>复制功能：</strong>
+                                <p>一键复制生成的链接或解码后的代码</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
         
         <footer>
-            <p>© 2023 代码转摩斯密码链接生成器 | 将您的代码转换为神秘有趣的摩斯密码链接</p>
+            <p>© 2023 代码与摩斯密码双向转换工具 | 将您的代码转换为神秘有趣的摩斯密码链接，或从链接还原代码</p>
         </footer>
     </div>
 
@@ -360,7 +492,19 @@
             const convertBtn = document.getElementById('convertBtn');
             const morseOutput = document.getElementById('morseOutput');
             const morseLink = document.getElementById('morseLink');
+            const decodedCode = document.getElementById('decodedCode');
             const copyBtn = document.getElementById('copyBtn');
+            const codeToLinkBtn = document.getElementById('codeToLinkMode');
+            const linkToCodeBtn = document.getElementById('linkToCodeMode');
+            const inputTitle = document.getElementById('inputTitle');
+            const outputTitle = document.getElementById('outputTitle');
+            const convertBtnText = document.getElementById('convertBtnText');
+            const copyBtnText = document.getElementById('copyBtnText');
+            const morseResult = document.getElementById('morseResult');
+            const codeResult = document.getElementById('codeResult');
+            
+            // 当前模式：true为代码转链接，false为链接转代码
+            let currentMode = true;
             
             // 摩斯密码字典
             const morseCodeDict = {
@@ -373,8 +517,59 @@
                 '.': '.-.-.-', ',': '--..--', '?': '..--..', "'": '.----.', '!': '-.-.--',
                 '/': '-..-.', '(': '-.--.', ')': '-.--.-', '&': '.-...', ':': '---...',
                 ';': '-.-.-.', '=': '-...-', '+': '.-.-.', '-': '-....-', '_': '..--.-',
-                '"': '.-..-.', '$': '...-..-', '@': '.--.-.', ' ': '/'
+                '"': '.-..-.', '$': '...-..-', '@': '.--.-.', ' ': '/', '\n': '.-.-'
             };
+            
+            // 创建反向字典
+            const reverseMorseDict = {};
+            for (const [char, code] of Object.entries(morseCodeDict)) {
+                reverseMorseDict[code] = char;
+            }
+            
+            // 切换模式
+            function toggleMode(isCodeToLink) {
+                currentMode = isCodeToLink;
+                
+                // 更新按钮状态
+                codeToLinkBtn.classList.toggle('active', isCodeToLink);
+                linkToCodeBtn.classList.toggle('active', !isCodeToLink);
+                
+                // 更新UI文本
+                inputTitle.textContent = isCodeToLink ? '输入代码' : '输入链接';
+                outputTitle.textContent = isCodeToLink ? '生成的摩斯密码链接' : '解码后的代码';
+                convertBtnText.textContent = isCodeToLink ? '转换为摩斯密码链接' : '解码链接为代码';
+                copyBtnText.textContent = isCodeToLink ? '复制链接到剪贴板' : '复制代码到剪贴板';
+                
+                // 更新输入框提示
+                codeInput.placeholder = isCodeToLink 
+                    ? '在此输入您的代码...' 
+                    : '在此输入包含摩斯密码的链接...';
+                
+                // 更新结果区域显示
+                morseResult.classList.toggle('hidden', !isCodeToLink);
+                codeResult.classList.toggle('hidden', isCodeToLink);
+                
+                // 清空输入和结果
+                codeInput.value = '';
+                morseOutput.innerHTML = '<span class="pulse"></span> 转换后的摩斯密码将显示在这里';
+                morseLink.textContent = '生成的链接将显示在这里';
+                decodedCode.textContent = '解码后的代码将显示在这里';
+                
+                // 根据模式设置示例
+                if (isCodeToLink) {
+                    codeInput.value = `function helloWorld() {
+  // 这是一个示例函数
+  console.log("Hello, World!");
+  return "摩斯密码: ... .- -- .--. .-.. .";
+}`;
+                } else {
+                    codeInput.value = 'https://example.com/?morse=..-. ..- -. -.-. - .. --- -. / .... . .-.. .-.. --- .-- --- .-. .-.. -.. ( ) / .... . .-.. .-.. --- .-- --- .-. .-.. -.. / -.-. --- -.. .';
+                }
+            }
+            
+            // 切换模式事件
+            codeToLinkBtn.addEventListener('click', () => toggleMode(true));
+            linkToCodeBtn.addEventListener('click', () => toggleMode(false));
             
             // 将文本转换为摩斯密码
             function textToMorse(text) {
@@ -383,39 +578,87 @@
                 }).join(' ');
             }
             
+            // 将摩斯密码转换为文本
+            function morseToText(morse) {
+                return morse.split(' ').map(code => {
+                    return reverseMorseDict[code] || code;
+                }).join('');
+            }
+            
             // 生成包含摩斯密码的URL
             function generateMorseLink(morse) {
                 const baseUrl = window.location.href.split('?')[0];
                 return `${baseUrl}?morse=${encodeURIComponent(morse)}`;
             }
             
+            // 从URL中提取摩斯密码
+            function extractMorseFromUrl(url) {
+                try {
+                    const urlObj = new URL(url);
+                    return urlObj.searchParams.get('morse') || '';
+                } catch (e) {
+                    return '';
+                }
+            }
+            
             // 转换按钮点击事件
             convertBtn.addEventListener('click', function() {
-                const code = codeInput.value.trim();
+                const input = codeInput.value.trim();
                 
-                if (!code) {
-                    alert('请输入代码！');
+                if (!input) {
+                    alert('请输入内容！');
                     return;
                 }
                 
-                // 转换为摩斯密码
-                const morseCode = textToMorse(code);
-                morseOutput.innerHTML = `<span class="pulse"></span> ${morseCode}`;
-                
-                // 生成链接
-                const link = generateMorseLink(morseCode);
-                morseLink.textContent = link;
-                
-                // 启用复制按钮
-                copyBtn.disabled = false;
+                if (currentMode) {
+                    // 代码转链接模式
+                    // 转换为摩斯密码
+                    const morseCode = textToMorse(input);
+                    morseOutput.innerHTML = `<span class="pulse"></span> ${morseCode}`;
+                    
+                    // 生成链接
+                    const link = generateMorseLink(morseCode);
+                    morseLink.textContent = link;
+                    
+                    // 启用复制按钮
+                    copyBtn.disabled = false;
+                } else {
+                    // 链接转代码模式
+                    const morseCode = extractMorseFromUrl(input);
+                    
+                    if (!morseCode) {
+                        alert('未在链接中找到摩斯密码参数，请检查链接格式！');
+                        return;
+                    }
+                    
+                    // 解码摩斯密码
+                    const decodedText = morseToText(morseCode);
+                    decodedCode.textContent = decodedText;
+                    
+                    // 启用复制按钮
+                    copyBtn.disabled = false;
+                }
             });
             
             // 复制按钮点击事件
             copyBtn.addEventListener('click', function() {
-                const link = morseLink.textContent;
+                let textToCopy = '';
+                
+                if (currentMode) {
+                    // 代码转链接模式：复制链接
+                    textToCopy = morseLink.textContent;
+                } else {
+                    // 链接转代码模式：复制解码后的代码
+                    textToCopy = decodedCode.textContent;
+                }
+                
+                if (!textToCopy) {
+                    alert('没有内容可复制！');
+                    return;
+                }
                 
                 // 使用现代剪贴板API
-                navigator.clipboard.writeText(link).then(() => {
+                navigator.clipboard.writeText(textToCopy).then(() => {
                     // 显示复制成功反馈
                     const originalText = copyBtn.innerHTML;
                     copyBtn.innerHTML = '<i class="fas fa-check"></i> 已复制!';
@@ -425,7 +668,7 @@
                     }, 2000);
                 }).catch(err => {
                     console.error('复制失败:', err);
-                    alert('复制失败，请手动复制链接');
+                    alert('复制失败，请手动复制内容');
                 });
             });
             
@@ -437,6 +680,9 @@
                 const decodedMorse = decodeURIComponent(morseParam);
                 morseOutput.innerHTML = `<span class="pulse"></span> ${decodedMorse}`;
                 morseLink.textContent = window.location.href;
+                
+                // 自动切换到代码转链接模式
+                toggleMode(true);
             }
         });
     </script>
