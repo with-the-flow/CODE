@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>代码转摩斯密码链接生成器</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: #e6e6e6;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background: rgba(15, 23, 42, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            border: 1px solid rgba(101, 119, 134, 0.3);
+        }
+        
+        header {
+            background: rgba(9, 14, 26, 0.9);
+            padding: 20px 30px;
+            text-align: center;
+            border-bottom: 1px solid rgba(101, 119, 134, 0.3);
+        }
+        
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 8px;
+            background: linear-gradient(90deg, #4cc9f0, #4361ee);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: 1px;
+        }
+        
+        .subtitle {
+            color: #94a3b8;
+            font-size: 1rem;
+            margin-top: 5px;
+        }
+        
+        .content {
+            display: flex;
+            flex-direction: column;
+            padding: 25px;
+        }
+        
+        @media (min-width: 768px) {
+            .content {
+                flex-direction: row;
+            }
+        }
+        
+        .editor-section, .result-section {
+            flex: 1;
+            padding: 20px;
+        }
+        
+        .editor-section {
+            border-right: 1px solid rgba(101, 119, 134, 0.3);
+        }
+        
+        .section-title {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            color: #60a5fa;
+            font-size: 1.3rem;
+        }
+        
+        .section-title i {
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+        
+        .code-editor {
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid rgba(101, 119, 134, 0.5);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            height: 300px;
+            overflow: auto;
+        }
+        
+        textarea {
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            border: none;
+            color: #e2e8f0;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 15px;
+            resize: none;
+            outline: none;
+            line-height: 1.5;
+        }
+        
+        textarea:focus {
+            outline: none;
+        }
+        
+        .convert-btn {
+            background: linear-gradient(90deg, #4361ee, #3a0ca3);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1.1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: 600;
+        }
+        
+        .convert-btn:hover {
+            background: linear-gradient(90deg, #3a0ca3, #4361ee);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(67, 97, 238, 0.4);
+        }
+        
+        .convert-btn i {
+            margin-right: 8px;
+        }
+        
+        .result-box {
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid rgba(101, 119, 134, 0.5);
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 10px;
+            min-height: 150px;
+            position: relative;
+        }
+        
+        .morse-code {
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 18px;
+            color: #4ade80;
+            line-height: 1.8;
+            word-break: break-all;
+        }
+        
+        .morse-link {
+            display: block;
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(30, 41, 59, 0.7);
+            border-radius: 6px;
+            color: #60a5fa;
+            font-size: 14px;
+            word-break: break-all;
+            border: 1px solid rgba(101, 119, 134, 0.3);
+        }
+        
+        .copy-btn {
+            background: rgba(30, 41, 59, 0.9);
+            color: #94a3b8;
+            border: 1px solid rgba(101, 119, 134, 0.5);
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            margin-top: 15px;
+            transition: all 0.2s ease;
+        }
+        
+        .copy-btn:hover {
+            background: rgba(56, 70, 94, 0.9);
+            color: #e2e8f0;
+        }
+        
+        .copy-btn i {
+            margin-right: 8px;
+        }
+        
+        .morse-example {
+            margin-top: 25px;
+            background: rgba(9, 14, 26, 0.6);
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            border: 1px dashed rgba(101, 119, 134, 0.3);
+        }
+        
+        .morse-example h3 {
+            color: #f472b6;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .morse-example h3 i {
+            margin-right: 8px;
+        }
+        
+        .example-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .morse-char {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px;
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 6px;
+        }
+        
+        .char {
+            font-weight: bold;
+            color: #f0abfc;
+        }
+        
+        .code {
+            font-family: monospace;
+            color: #4ade80;
+            font-size: 13px;
+            margin-top: 3px;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #94a3b8;
+            font-size: 0.9rem;
+            border-top: 1px solid rgba(101, 119, 134, 0.3);
+            background: rgba(9, 14, 26, 0.9);
+        }
+        
+        .pulse {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: #4ade80;
+            border-radius: 50%;
+            margin-right: 5px;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; transform: scale(1.2); }
+            100% { opacity: 0.6; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-code"></i> 代码转摩斯密码链接生成器</h1>
+            <p class="subtitle">输入代码 → 生成包含摩斯密码的链接 → 一键复制分享</p>
+        </header>
+        
+        <div class="content">
+            <div class="editor-section">
+                <div class="section-title">
+                    <i class="fas fa-edit"></i> 代码编辑器
+                </div>
+                <div class="code-editor">
+                    <textarea id="codeInput" placeholder="在此输入您的代码...">function helloWorld() {
+  console.log("Hello, World!");
+  return "摩斯密码: ... .- -- .--. .-.. .";
+}</textarea>
+                </div>
+                <button id="convertBtn" class="convert-btn">
+                    <i class="fas fa-exchange-alt"></i> 转换为摩斯密码链接
+                </button>
+                
+                <div class="morse-example">
+                    <h3><i class="fas fa-info-circle"></i> 摩斯密码示例</h3>
+                    <p>摩斯密码使用点（.）和划（-）表示字符：</p>
+                    <div class="example-list">
+                        <div class="morse-char">
+                            <span class="char">A</span>
+                            <span class="code">.-</span>
+                        </div>
+                        <div class="morse-char">
+                            <span class="char">B</span>
+                            <span class="code">-...</span>
+                        </div>
+                        <div class="morse-char">
+                            <span class="char">C</span>
+                            <span class="code">-.-.</span>
+                        </div>
+                        <div class="morse-char">
+                            <span class="char">1</span>
+                            <span class="code">.----</span>
+                        </div>
+                        <div class="morse-char">
+                            <span class="char">2</span>
+                            <span class="code">..---</span>
+                        </div>
+                        <div class="morse-char">
+                            <span class="char">@</span>
+                            <span class="code">.--.-.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="result-section">
+                <div class="section-title">
+                    <i class="fas fa-link"></i> 生成的摩斯密码链接
+                </div>
+                <div class="result-box">
+                    <div class="morse-code" id="morseOutput">
+                        <span class="pulse"></span> 转换后的摩斯密码将显示在这里
+                    </div>
+                    <div class="morse-link" id="morseLink">
+                        生成的链接将显示在这里
+                    </div>
+                    <button id="copyBtn" class="copy-btn">
+                        <i class="fas fa-copy"></i> 复制链接到剪贴板
+                    </button>
+                </div>
+                
+                <div class="morse-example">
+                    <h3><i class="fas fa-lightbulb"></i> 使用说明</h3>
+                    <p>1. 在左侧输入代码（支持任何编程语言）</p>
+                    <p>2. 点击"转换为摩斯密码链接"按钮</p>
+                    <p>3. 生成的链接包含您代码的摩斯密码版本</p>
+                    <p>4. 使用"复制链接"按钮分享给他人</p>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>© 2023 代码转摩斯密码链接生成器 | 将您的代码转换为神秘有趣的摩斯密码链接</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const codeInput = document.getElementById('codeInput');
+            const convertBtn = document.getElementById('convertBtn');
+            const morseOutput = document.getElementById('morseOutput');
+            const morseLink = document.getElementById('morseLink');
+            const copyBtn = document.getElementById('copyBtn');
+            
+            // 摩斯密码字典
+            const morseCodeDict = {
+                'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.',
+                'G': '--.', 'H': '....', 'I': '..', 'J': '.---', 'K': '-.-', 'L': '.-..',
+                'M': '--', 'N': '-.', 'O': '---', 'P': '.--.', 'Q': '--.-', 'R': '.-.',
+                'S': '...', 'T': '-', 'U': '..-', 'V': '...-', 'W': '.--', 'X': '-..-',
+                'Y': '-.--', 'Z': '--..', '0': '-----', '1': '.----', '2': '..---', '3': '...--',
+                '4': '....-', '5': '.....', '6': '-....', '7': '--...', '8': '---..', '9': '----.',
+                '.': '.-.-.-', ',': '--..--', '?': '..--..', "'": '.----.', '!': '-.-.--',
+                '/': '-..-.', '(': '-.--.', ')': '-.--.-', '&': '.-...', ':': '---...',
+                ';': '-.-.-.', '=': '-...-', '+': '.-.-.', '-': '-....-', '_': '..--.-',
+                '"': '.-..-.', '$': '...-..-', '@': '.--.-.', ' ': '/'
+            };
+            
+            // 将文本转换为摩斯密码
+            function textToMorse(text) {
+                return text.toUpperCase().split('').map(char => {
+                    return morseCodeDict[char] || char;
+                }).join(' ');
+            }
+            
+            // 生成包含摩斯密码的URL
+            function generateMorseLink(morse) {
+                const baseUrl = window.location.href.split('?')[0];
+                return `${baseUrl}?morse=${encodeURIComponent(morse)}`;
+            }
+            
+            // 转换按钮点击事件
+            convertBtn.addEventListener('click', function() {
+                const code = codeInput.value.trim();
+                
+                if (!code) {
+                    alert('请输入代码！');
+                    return;
+                }
+                
+                // 转换为摩斯密码
+                const morseCode = textToMorse(code);
+                morseOutput.innerHTML = `<span class="pulse"></span> ${morseCode}`;
+                
+                // 生成链接
+                const link = generateMorseLink(morseCode);
+                morseLink.textContent = link;
+                
+                // 启用复制按钮
+                copyBtn.disabled = false;
+            });
+            
+            // 复制按钮点击事件
+            copyBtn.addEventListener('click', function() {
+                const link = morseLink.textContent;
+                
+                // 使用现代剪贴板API
+                navigator.clipboard.writeText(link).then(() => {
+                    // 显示复制成功反馈
+                    const originalText = copyBtn.innerHTML;
+                    copyBtn.innerHTML = '<i class="fas fa-check"></i> 已复制!';
+                    
+                    setTimeout(() => {
+                        copyBtn.innerHTML = originalText;
+                    }, 2000);
+                }).catch(err => {
+                    console.error('复制失败:', err);
+                    alert('复制失败，请手动复制链接');
+                });
+            });
+            
+            // 检查URL参数，如果有morse参数则显示
+            const urlParams = new URLSearchParams(window.location.search);
+            const morseParam = urlParams.get('morse');
+            
+            if (morseParam) {
+                const decodedMorse = decodeURIComponent(morseParam);
+                morseOutput.innerHTML = `<span class="pulse"></span> ${decodedMorse}`;
+                morseLink.textContent = window.location.href;
+            }
+        });
+    </script>
+</body>
+</html>
